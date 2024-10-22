@@ -1,0 +1,14 @@
+// build.gradle (nivel de proyecto)
+
+// Archivo de nivel superior para configuración común a todos los subproyectos/módulos.
+plugins {
+    // Complemento de Google Services (no aplicado a nivel de proyecto)
+    id 'com.google.gms.google-services' version '4.4.2' apply false
+
+    // Alias para plugins de Android (no aplicado a nivel de proyecto)
+    alias(libs.plugins.android.application) apply false
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

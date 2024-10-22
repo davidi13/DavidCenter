@@ -1,0 +1,82 @@
+// build.gradle (nivel de módulo)
+
+plugins {
+    // Alias del plugin de Android para aplicaciones (no necesitas id 'com.android.application')
+    alias(libs.plugins.android.application)
+
+    // Plugin de Google Services para Firebase
+    id 'com.google.gms.google-services'
+
+}
+
+android {
+    namespace 'com.example.myloginscreen'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.example.myloginscreen"
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    // BOM de Firebase para manejar versiones
+    implementation platform('com.google.firebase:firebase-bom:33.4.0')
+
+    // Firebase Analytics
+    implementation 'com.google.firebase:firebase-analytics'
+
+    // Firebase firestore
+
+    implementation 'com.google.firebase:firebase-firestore'
+
+    // Firebase storage
+
+    implementation 'com.google.firebase:firebase-storage:20.2.1'
+
+
+    // Firebase glide
+
+    implementation 'com.github.bumptech.glide:glide:4.15.1'
+    implementation libs.navigation.runtime
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.15.1'
+
+    // Firebase Auth
+
+    implementation("com.google.firebase:firebase-auth")
+
+    // Picasso
+
+    implementation 'com.squareup.picasso:picasso:2.8'
+
+    // Librerías comunes de Android
+    implementation libs.appcompat
+    implementation libs.material
+    implementation libs.activity
+    implementation libs.constraintlayout
+
+    // Dependencias para pruebas unitarias y de instrumentación
+    testImplementation libs.junit
+    androidTestImplementation libs.ext.junit
+    androidTestImplementation libs.espresso.core
+
+    apply plugin: 'com.google.gms.google-services'
+
+}

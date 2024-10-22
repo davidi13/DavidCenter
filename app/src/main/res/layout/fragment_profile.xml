@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/transparente">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- Texto "Profile" como encabezado -->
+        <TextView
+            android:id="@+id/profile_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="PROFILE"
+            android:textSize="25sp"
+            android:textStyle="bold"
+            android:gravity="center_horizontal"
+            android:textColor="@color/black"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp" />
+
+        <!-- Línea horizontal debajo del texto -->
+        <View
+            android:id="@+id/horizontal_line"
+            android:layout_width="300dp"
+            android:layout_height="2dp"
+            android:background="@color/transparente2"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="32dp" />
+
+        <!-- Logo circular de perfil  -->
+        <ImageView
+            android:id="@+id/profile_image"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:layout_marginTop="10dp"
+            android:scaleType="centerCrop"
+            android:layout_gravity="center_horizontal"
+            android:background="@drawable/circle_shape"
+            android:src="@drawable/aklogo" />
+
+        <!-- Botón o texto debajo del logo para cambiar la imagen (opcional) -->
+        <TextView
+            android:id="@+id/change_image_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Change Profile Picture"
+            android:textSize="16sp"
+            android:textStyle="italic"
+            android:textColor="@color/black"
+            android:layout_marginTop="16dp"
+            android:layout_gravity="center_horizontal"/>
+
+        <TextView
+            android:id="@+id/email"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Email"
+            android:textColor="@color/black"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:layout_marginTop="20dp"
+            android:layout_marginLeft="20dp"
+            android:layout_marginBottom="6dp"/>
+
+        <TextView
+            android:id="@+id/profile_email"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20sp"
+            android:text="contact@gmail.com"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            android:layout_marginBottom="26dp"/>
+
+        <TextView
+            android:id="@+id/change_password"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="PASSWORD"
+            android:textColor="@color/black"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="26dp"/>
+
+        <!-- Campo para la contraseña actual -->
+        <EditText
+            android:id="@+id/current_password"
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:hint="Current Password"
+            android:inputType="textPassword"
+            android:layout_marginTop="16dp"/>
+
+        <!-- Campo para la nueva contraseña -->
+        <EditText
+            android:id="@+id/new_password"
+            android:layout_width="300dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_height="wrap_content"
+            android:hint="New Password"
+            android:inputType="textPassword"
+            android:layout_marginTop="16dp"/>
+
+        <!-- Campo para confirmar la nueva contraseña -->
+        <EditText
+            android:id="@+id/confirm_new_password"
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:hint="Confirm New Password"
+            android:inputType="textPassword"
+            android:layout_marginTop="16dp"/>
+
+        <!-- Botón para cambiar la contraseña -->
+        <Button
+            android:id="@+id/change_password_button"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="Change Password"
+            android:backgroundTint="@color/black"
+            android:textColor="@color/white"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="40dp"/>
+
+
+    </LinearLayout>
+</ScrollView>
+

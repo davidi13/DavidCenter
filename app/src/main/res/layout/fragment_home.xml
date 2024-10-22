@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@color/transparente"
+    tools:context=".HomeFragment">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
+
+        <!-- Texto "Juegos" antes del botón -->
+        <TextView
+            android:id="@+id/juegos_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="GAMES"
+            android:textSize="25sp"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+            android:layout_marginTop="16dp"/>
+
+        <!-- Línea horizontal centrada debajo del texto -->
+        <View
+            android:id="@+id/horizontal_line"
+            android:layout_width="300dp"
+            android:layout_height="2dp"
+            android:background="@color/transparente2"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="32dp" />
+
+        <!-- Botón SIMON DICE -->
+        <Button
+            android:id="@+id/rounded_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:background="@drawable/rounded_button_background"
+            android:padding="16dp"
+            android:drawableStart="@drawable/simon_dice"
+            android:drawablePadding="8dp"
+            android:text="SIMON SAYS"
+            android:textStyle="bold"
+            android:textColor="@color/white"
+            android:textSize="36sp"
+            android:gravity="center" />
+
+        <!-- Nuevo botón debajo de SIMON DICE -->
+        <Button
+            android:id="@+id/second_rounded_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:background="@drawable/second_button"
+            android:padding="16dp"
+            android:drawableStart="@drawable/dosmilcuarenta"
+            android:drawablePadding="8dp"
+            android:text="2048"
+            android:textStyle="bold"
+            android:textColor="@color/white"
+            android:textSize="48sp"
+            android:gravity="center" />
+
+        <!-- Botón LIGHTS OUTSIDE -->
+        <Button
+            android:id="@+id/third_rounded_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:background="@drawable/third_button"
+            android:padding="16dp"
+            android:drawableStart="@drawable/lights_outside"
+            android:drawablePadding="8dp"
+            android:text="LIGHTS OUTSIDE"
+            android:textStyle="bold"
+            android:textColor="@color/white"
+            android:textSize="36sp"
+            android:gravity="center" />
+
+    </LinearLayout>
+
+</ScrollView>
