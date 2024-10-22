@@ -119,7 +119,7 @@ public class LightsOutside extends AppCompatActivity {
         currentRound = 1;
         lightedPositions.clear();
         gameOver = false;
-        elapsedTime = 0; // Comenzar en 0:01
+        elapsedTime = 0; // Comenzar en 0:00
         roundCounter.setText("Rounds: " + currentRound);
         timer.setText(formatTime(elapsedTime)); // Mostrar el tiempo inicial
         playButton.setText("Restart"); // Cambiar el texto del botón
