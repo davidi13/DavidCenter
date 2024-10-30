@@ -26,4 +26,19 @@
     <color name="transparente2">#dbdada</color>
 
 
+    <color name="color_0">#ccc0b3</color> <!-- Color para el 0 -->
+    <color name="color_2">#eee4da</color> <!-- Color para el 2 -->
+    <color name="color_4">#ede0c8</color> <!-- Color para el 4 -->
+    <color name="color_8">#f2b179</color> <!-- Color para el 8 -->
+    <color name="color_16">#f59563</color> <!-- Color para el 16 -->
+    <color name="color_32">#f67c5f</color> <!-- Color para el 32 -->
+    <color name="color_64">#f67c5f</color> <!-- Color para el 64 -->
+    <color name="color_128">#edcf72</color> <!-- Color para el 128 -->
+    <color name="color_256">#edcc61</color> <!-- Color para el 256 -->
+    <color name="color_512">#edc850</color> <!-- Color para el 512 -->
+    <color name="color_1024">#edc53f</color> <!-- Color para el 1024 -->
+    <color name="color_2048">#edc22e</color> <!-- Color para el 2048 -->
+    <color name="color_default">#cdc1b4</color> <!-- Color por defecto -->
+
+
 </resources>

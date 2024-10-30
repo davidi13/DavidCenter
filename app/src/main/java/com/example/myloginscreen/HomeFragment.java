@@ -39,7 +39,7 @@ public class HomeFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
+
         View view = inflater.inflate(R.layout.fragment_home, container, false);
 
         // Encuentra el NavigationView para obtener el nav_header
@@ -60,7 +60,7 @@ public class HomeFragment extends Fragment {
         // Encuentra el botón 2048 y establece el OnClickListener
         Button game2048Button = view.findViewById(R.id.second_rounded_button);
         game2048Button.setOnClickListener(v -> {
-            Intent intent = new Intent(getActivity(), Game2048.class);
+            Intent intent = new Intent(getActivity(), Game2048Activity.class);
             startActivity(intent);
         });
 
