@@ -21,7 +21,12 @@
     <color name="teal_200">#FF03DAC5</color>
     <color name="teal_700">#FF018786</color>
     <color name="lavender">#8692f7</color>
+
+
     <color name="yellow">#ced405</color>
+    <color name="dosmilcuarenta">#CDC1B4</color>
+    <color name="marron_oscuro">#776E65</color>
+    <color name="marron_claro">#BCA890</color>
     <color name="transparente">#ececec</color>
     <color name="transparente2">#dbdada</color>
 

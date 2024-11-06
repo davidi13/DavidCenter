@@ -1,67 +1,151 @@
 package com.example.myloginscreen;
 
+import android.annotation.SuppressLint;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
-import android.view.View;
 import android.widget.Button;
+import android.widget.Chronometer;
 import android.widget.GridLayout;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.DocumentReference;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Random;
 
 public class Game2048Activity extends AppCompatActivity {
+
+    private static final int GRID_SIZE = 4;
+    private static final int TEXT_SIZE_SMALL = 18;
+    private static final int TEXT_SIZE_LARGE = 24;
 
     private int[][] board;
     private TextView[][] tiles;
     private TextView scoreView;
     private int score = 0;
-    private final int GRID_SIZE = 4;
+    private ImageButton backButton2048;
 
-    private int[][] previousBoard; // Para guardar el estado anterior del tablero
+    private Chronometer chronometer2048;
+    private boolean isChronometerStarted = false;
 
+    private FirebaseFirestore db;
+    private String userId;
+
+    private int[][] previousBoard;
     private GestureDetector gestureDetector;
+    private Map<Integer, Integer> colorMap;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game2048);
 
-        board = new int[GRID_SIZE][GRID_SIZE];
-        tiles = new TextView[GRID_SIZE][GRID_SIZE];
+        // Inicializar Firestore y obtener el ID del usuario
+        db = FirebaseFirestore.getInstance();
+        userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+        initializeViews();
+        initializeColorMap();
+        initializeBoard();
+
+        addRandomTile();
+        addRandomTile();
+        updateBoard();
+
+        initSwipeListener();
+    }
+
+    // Método para guardar el mejor puntaje
+    private void saveBestScore(int score, long elapsedTime) {
+        if (userId == null) return; // Verificar que el usuario esté autenticado
+
+        DocumentReference scoreRef = db.collection("users").document(userId).collection("scores").document("best_score");
+
+        // Formatear la fecha y hora
+        String date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
+
+        // Datos a guardar
+        Map<String, Object> scoreData = new HashMap<>();
+        scoreData.put("score", score);
+        scoreData.put("time", elapsedTime); // tiempo en milisegundos
+        scoreData.put("date", date);
+
+        // Obtener el mejor puntaje actual y actualizar si el nuevo puntaje es mayor
+        scoreRef.get().addOnSuccessListener(document -> {
+            if (document.exists()) {
+                int bestScore = document.getLong("score").intValue();
+                if (score > bestScore) {
+                    scoreRef.set(scoreData); // Actualizar con el nuevo mejor puntaje
+                }
+            } else {
+                scoreRef.set(scoreData); // Guardar si no existe puntaje previo
+            }
+        }).addOnFailureListener(e -> Toast.makeText(this, "Error al guardar puntaje", Toast.LENGTH_SHORT).show());
+    }
+
+
+    private void initializeViews() {
+        backButton2048 = findViewById(R.id.button_back_2048);
+        chronometer2048 = findViewById(R.id.chronometer_2048);
         scoreView = findViewById(R.id.score_view);
 
-        initBoard();
-        initSwipeListener();
-        addRandomTile();
-        addRandomTile();
+        backButton2048.setOnClickListener(v -> finish());
 
-        // Configurar los botones
         Button undoButton = findViewById(R.id.button_undo);
         Button restartButton = findViewById(R.id.button_restart);
-
         undoButton.setOnClickListener(v -> undoMove());
         restartButton.setOnClickListener(v -> restartGame());
     }
 
-    private void initBoard() {
-        GridLayout gridLayout = findViewById(R.id.grid_layout);
+    private void initializeColorMap() {
+        colorMap = new HashMap<>();
+        colorMap.put(0, R.color.color_0);
+        colorMap.put(2, R.color.color_2);
+        colorMap.put(4, R.color.color_4);
+        colorMap.put(8, R.color.color_8);
+        colorMap.put(16, R.color.color_16);
+        colorMap.put(32, R.color.color_32);
+        colorMap.put(64, R.color.color_64);
+        colorMap.put(128, R.color.color_128);
+        colorMap.put(256, R.color.color_256);
+        colorMap.put(512, R.color.color_512);
+        colorMap.put(1024, R.color.color_1024);
+        colorMap.put(2048, R.color.color_2048);
+    }
 
-        if (gridLayout.getChildCount() != GRID_SIZE * GRID_SIZE) {
-            Toast.makeText(this, "Error: GridLayout debe tener 16 hijos", Toast.LENGTH_LONG).show();
-            return;
-        }
+    @SuppressLint("ClickableViewAccessibility")
+    private void initializeBoard() {
+        GridLayout gridLayout = findViewById(R.id.grid_layout);
+        board = new int[GRID_SIZE][GRID_SIZE];
+        tiles = new TextView[GRID_SIZE][GRID_SIZE];
 
         for (int i = 0; i < GRID_SIZE; i++) {
             for (int j = 0; j < GRID_SIZE; j++) {
                 tiles[i][j] = (TextView) gridLayout.getChildAt(i * GRID_SIZE + j);
             }
         }
-        updateBoard();
+
+        gridLayout.setOnTouchListener((v, event) -> {
+            gestureDetector.onTouchEvent(event);
+            if (event.getAction() == MotionEvent.ACTION_UP) {
+                v.performClick();
+            }
+            return true;
+        });
     }
 
     private void initSwipeListener() {
@@ -72,136 +156,108 @@ public class Game2048Activity extends AppCompatActivity {
                 float diffY = e2.getY() - e1.getY();
 
                 if (Math.abs(diffX) > Math.abs(diffY)) {
-                    if (diffX > 0) swipeRight();
-                    else swipeLeft();
+                    if (diffX > 0) moveBoard(Direction.RIGHT);
+                    else moveBoard(Direction.LEFT);
                 } else {
-                    if (diffY > 0) swipeDown();
-                    else swipeUp();
+                    if (diffY > 0) moveBoard(Direction.DOWN);
+                    else moveBoard(Direction.UP);
                 }
                 return true;
             }
         });
     }
 
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        return gestureDetector.onTouchEvent(event);
+    private void startChronometerIfNotStarted() {
+        if (!isChronometerStarted) {
+            chronometer2048.setBase(SystemClock.elapsedRealtime());
+            chronometer2048.start();
+            isChronometerStarted = true;
+        }
     }
 
-    private void swipeLeft() {
-        savePreviousState(); // Guardar el estado antes de mover
+    private void moveBoard(Direction direction) {
+        startChronometerIfNotStarted();
+        savePreviousState();
+
         boolean moved = false;
         for (int i = 0; i < GRID_SIZE; i++) {
-            int[] newRow = new int[GRID_SIZE];
-            int position = 0;
-
-            for (int j = 0; j < GRID_SIZE; j++) {
-                if (board[i][j] != 0) {
-                    if (position > 0 && newRow[position - 1] == board[i][j]) {
-                        newRow[position - 1] *= 2;
-                        score += newRow[position - 1];
-                        moved = true;
-                    } else {
-                        newRow[position] = board[i][j];
-                        if (position != j) moved = true;
-                        position++;
-                    }
-                }
-            }
-            board[i] = newRow;
+            int[] line = extractLine(i, direction);
+            int[] newLine = compressAndMergeLine(line);
+            if (!moved && !compareLines(line, newLine)) moved = true;
+            insertLine(i, newLine, direction);
         }
+
         if (moved) {
             addRandomTile();
             updateBoard();
+
+            if (!hasMovesAvailable()) {
+                endGame();
+            }
         }
     }
 
-    private void swipeRight() {
-        savePreviousState(); // Guardar el estado antes de mover
-        boolean moved = false;
+    private int[] extractLine(int index, Direction direction) {
+        int[] line = new int[GRID_SIZE];
         for (int i = 0; i < GRID_SIZE; i++) {
-            int[] newRow = new int[GRID_SIZE];
-            int position = GRID_SIZE - 1;
-
-            for (int j = GRID_SIZE - 1; j >= 0; j--) {
-                if (board[i][j] != 0) {
-                    if (position < GRID_SIZE - 1 && newRow[position + 1] == board[i][j]) {
-                        newRow[position + 1] *= 2;
-                        score += newRow[position + 1];
-                        moved = true;
-                    } else {
-                        newRow[position] = board[i][j];
-                        if (position != j) moved = true;
-                        position--;
-                    }
-                }
+            switch (direction) {
+                case LEFT:
+                    line[i] = board[index][i];
+                    break;
+                case RIGHT:
+                    line[i] = board[index][GRID_SIZE - 1 - i];
+                    break;
+                case UP:
+                    line[i] = board[i][index];
+                    break;
+                case DOWN:
+                    line[i] = board[GRID_SIZE - 1 - i][index];
+                    break;
             }
-            board[i] = newRow;
         }
-        if (moved) {
-            addRandomTile();
-            updateBoard();
+        return line;
+    }
+
+    private void insertLine(int index, int[] line, Direction direction) {
+        for (int i = 0; i < GRID_SIZE; i++) {
+            switch (direction) {
+                case LEFT:
+                    board[index][i] = line[i];
+                    break;
+                case RIGHT:
+                    board[index][GRID_SIZE - 1 - i] = line[i];
+                    break;
+                case UP:
+                    board[i][index] = line[i];
+                    break;
+                case DOWN:
+                    board[GRID_SIZE - 1 - i][index] = line[i];
+                    break;
+            }
         }
     }
 
-    private void swipeUp() {
-        savePreviousState(); // Guardar el estado antes de mover
-        boolean moved = false;
-        for (int j = 0; j < GRID_SIZE; j++) {
-            int[] newCol = new int[GRID_SIZE];
-            int position = 0;
-
-            for (int i = 0; i < GRID_SIZE; i++) {
-                if (board[i][j] != 0) {
-                    if (position > 0 && newCol[position - 1] == board[i][j]) {
-                        newCol[position - 1] *= 2;
-                        score += newCol[position - 1];
-                        moved = true;
-                    } else {
-                        newCol[position] = board[i][j];
-                        if (position != i) moved = true;
-                        position++;
-                    }
+    private int[] compressAndMergeLine(int[] line) {
+        int[] compressedLine = new int[GRID_SIZE];
+        int position = 0;
+        for (int num : line) {
+            if (num != 0) {
+                if (position > 0 && compressedLine[position - 1] == num) {
+                    compressedLine[position - 1] *= 2;
+                    score += compressedLine[position - 1];
+                } else {
+                    compressedLine[position++] = num;
                 }
             }
-            for (int i = 0; i < GRID_SIZE; i++) {
-                board[i][j] = newCol[i];
-            }
         }
-        if (moved) {
-            addRandomTile();
-            updateBoard();
-        }
+        return compressedLine;
     }
 
-    private void swipeDown() {
-        savePreviousState(); // Guardar el estado antes de mover
-        boolean moved = false;
-        for (int j = 0; j < GRID_SIZE; j++) {
-            int[] newCol = new int[GRID_SIZE];
-            int position = GRID_SIZE - 1;
-
-            for (int i = GRID_SIZE - 1; i >= 0; i--) {
-                if (board[i][j] != 0) {
-                    if (position < GRID_SIZE - 1 && newCol[position + 1] == board[i][j]) {
-                        newCol[position + 1] *= 2;
-                        score += newCol[position + 1];
-                        moved = true;
-                    } else {
-                        newCol[position] = board[i][j];
-                        if (position != i) moved = true;
-                        position--;
-                    }
-                }
-            }
-            for (int i = 0; i < GRID_SIZE; i++) {
-                board[i][j] = newCol[i];
-            }
+    private boolean compareLines(int[] line1, int[] line2) {
+        for (int i = 0; i < GRID_SIZE; i++) {
+            if (line1[i] != line2[i]) return false;
         }
-        if (moved) {
-            addRandomTile();
-            updateBoard();
-        }
+        return true;
     }
 
     private void addRandomTile() {
@@ -218,67 +274,49 @@ public class Game2048Activity extends AppCompatActivity {
         for (int i = 0; i < GRID_SIZE; i++) {
             for (int j = 0; j < GRID_SIZE; j++) {
                 int value = board[i][j];
-                tiles[i][j].setText(value == 0 ? "" : String.valueOf(value));
+                TextView tile = tiles[i][j];
 
-                // Cambiar el tamaño de texto basado en el valor
-                if (value > 99) {
-                    tiles[i][j].setTextSize(18); // Tamaño de texto para números de 3 dígitos o más
-                } else {
-                    tiles[i][j].setTextSize(24); // Tamaño de texto para números de 2 dígitos o menos
-                }
+                tile.setText(value == 0 ? "" : String.valueOf(value));
+                tile.setTextSize(value > 99 ? TEXT_SIZE_SMALL : TEXT_SIZE_LARGE);
 
-                // Actualizar el color de fondo según el valor
-                int color;
-                switch (value) {
-                    case 0:
-                        color = ContextCompat.getColor(this, R.color.color_0);
-                        break;
-                    case 2:
-                        color = ContextCompat.getColor(this, R.color.color_2);
-                        break;
-                    case 4:
-                        color = ContextCompat.getColor(this, R.color.color_4);
-                        break;
-                    case 8:
-                        color = ContextCompat.getColor(this, R.color.color_8);
-                        break;
-                    case 16:
-                        color = ContextCompat.getColor(this, R.color.color_16);
-                        break;
-                    case 32:
-                        color = ContextCompat.getColor(this, R.color.color_32);
-                        break;
-                    case 64:
-                        color = ContextCompat.getColor(this, R.color.color_64);
-                        break;
-                    case 128:
-                        color = ContextCompat.getColor(this, R.color.color_128);
-                        break;
-                    case 256:
-                        color = ContextCompat.getColor(this, R.color.color_256);
-                        break;
-                    case 512:
-                        color = ContextCompat.getColor(this, R.color.color_512);
-                        break;
-                    case 1024:
-                        color = ContextCompat.getColor(this, R.color.color_1024);
-                        break;
-                    case 2048:
-                        color = ContextCompat.getColor(this, R.color.color_2048);
-                        break;
-                    default:
-                        color = ContextCompat.getColor(this, R.color.color_default);
-                        break;
+                int colorRes = colorMap.getOrDefault(value, R.color.color_default);
+                Drawable background = ContextCompat.getDrawable(this, R.drawable.title_background);
+                if (background != null) {
+                    background.setTint(ContextCompat.getColor(this, colorRes));
+                    tile.setBackground(background);
                 }
-                tiles[i][j].setBackgroundColor(color);
             }
         }
         scoreView.setText("Score: " + score);
     }
 
+    private boolean hasMovesAvailable() {
+        for (int i = 0; i < GRID_SIZE; i++) {
+            for (int j = 0; j < GRID_SIZE; j++) {
+                if (board[i][j] == 0) return true;
+                if (j < GRID_SIZE - 1 && board[i][j] == board[i][j + 1]) return true;
+                if (i < GRID_SIZE - 1 && board[i][j] == board[i + 1][j]) return true;
+            }
+        }
+        return false;
+    }
+
+    // Llamar a saveBestScore cuando el juego termina
+    private void endGame() {
+        chronometer2048.stop();
+        long elapsedTime = SystemClock.elapsedRealtime() - chronometer2048.getBase();
+
+        // Guardar el puntaje si es el mejor
+        saveBestScore(score, elapsedTime);
+
+        // Mostrar mensaje al usuario
+        Toast.makeText(this, "¡GAME OVER! No more moves.", Toast.LENGTH_LONG).show();
+    }
 
     private void savePreviousState() {
-        previousBoard = new int[GRID_SIZE][GRID_SIZE];
+        if (previousBoard == null) {
+            previousBoard = new int[GRID_SIZE][GRID_SIZE];
+        }
         for (int i = 0; i < GRID_SIZE; i++) {
             System.arraycopy(board[i], 0, previousBoard[i], 0, GRID_SIZE);
         }
@@ -289,16 +327,24 @@ public class Game2048Activity extends AppCompatActivity {
             board = previousBoard;
             updateBoard();
         } else {
-            Toast.makeText(this, "No hay movimientos para deshacer", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "No movements for undo", Toast.LENGTH_SHORT).show();
         }
     }
 
     private void restartGame() {
         score = 0;
         board = new int[GRID_SIZE][GRID_SIZE];
-        previousBoard = null; // Reiniciar el estado anterior
+        previousBoard = null;
+
+        chronometer2048.setBase(SystemClock.elapsedRealtime());
+        isChronometerStarted = true;
+
         addRandomTile();
         addRandomTile();
         updateBoard();
+    }
+
+    private enum Direction {
+        LEFT, RIGHT, UP, DOWN
     }
 }

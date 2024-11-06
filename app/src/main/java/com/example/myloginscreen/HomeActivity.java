@@ -65,7 +65,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         } else if (id == R.id.nav_settings) {
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new ProfileFragment()).commit();
         } else if (id == R.id.nav_share) {
-            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new ShareFragment()).commit();
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new ScoreFragment()).commit();
         } else if (id == R.id.nav_about) {
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new AboutFragment()).commit();
         } else if (id == R.id.nav_logout) {

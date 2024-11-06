@@ -18,6 +18,7 @@
         <activity
             android:name=".Game2048Activity"
             android:exported="false"
+            android:configChanges="orientation|screenSize"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
         <activity
             android:name=".LightsOutside"

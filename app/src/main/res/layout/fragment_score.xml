@@ -1,0 +1,37 @@
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/transparente">
+
+    <LinearLayout
+        android:id="@+id/score_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/score_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SCORES"
+            android:textSize="25sp"
+            android:textStyle="bold"
+            android:gravity="center_horizontal"
+            android:textColor="@color/black"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp" />
+
+        <!-- Línea horizontal debajo del texto -->
+        <View
+            android:id="@+id/horizontal_line"
+            android:layout_width="300dp"
+            android:layout_height="2dp"
+            android:background="@color/transparente2"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="32dp" />
+
+    </LinearLayout>
+</ScrollView>
