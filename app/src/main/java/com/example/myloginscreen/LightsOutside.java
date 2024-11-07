@@ -16,10 +16,17 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public class LightsOutside extends AppCompatActivity {
 
@@ -27,22 +34,24 @@ public class LightsOutside extends AppCompatActivity {
     private Button playButton;
     private ImageButton backButton;
     private TextView roundCounter;
-    private TextView timer; // Añadir TextView para el cronómetro
+    private TextView timer; // TextView para el cronómetro
     private List<Integer> lightedPositions;
     private int currentRound;
     private Handler handler;
     private boolean gameOver;
     private Runnable timerRunnable;
-    private int elapsedTime; // Variable para el tiempo
+    private long elapsedTime; // Variable para el tiempo transcurrido en milisegundos
 
     // Para SoundPool
     private SoundPool soundPool;
     private int soundStart;
     private int soundLose;
     private int soundButtonClick;
-    private int soundNextRound; // Sonido para el cambio de ronda
+    private int soundNextRound;
 
     private FirebaseAuth auth;
+    private FirebaseFirestore db;
+    private String userId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +59,8 @@ public class LightsOutside extends AppCompatActivity {
         setContentView(R.layout.activity_lights_outside);
 
         auth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
+        userId = auth.getCurrentUser().getUid();
 
         gridLayout = findViewById(R.id.grid_layout);
         playButton = findViewById(R.id.play_button);
@@ -73,19 +84,13 @@ public class LightsOutside extends AppCompatActivity {
         soundStart = soundPool.load(this, R.raw.inicio, 1);
         soundLose = soundPool.load(this, R.raw.end, 1);
         soundButtonClick = soundPool.load(this, R.raw.pop, 1);
-        soundNextRound = soundPool.load(this, R.raw.lvl_up, 1); // Cargar el sonido para el cambio de ronda
+        soundNextRound = soundPool.load(this, R.raw.lvl_up, 1);
 
-        // Inicializar la cuadrícula de botones
         initializeGrid();
-
-        // Deshabilitar todos los botones al inicio
         enableGridButtons(false);
 
-        playButton.setOnClickListener(v -> {
-            startGame();
-        });
+        playButton.setOnClickListener(v -> startGame());
 
-        // Configurar el botón de regreso
         backButton.setOnClickListener(v -> {
             Intent intent = new Intent(LightsOutside.this, HomeActivity.class);
             startActivity(intent);
@@ -119,36 +124,35 @@ public class LightsOutside extends AppCompatActivity {
         currentRound = 1;
         lightedPositions.clear();
         gameOver = false;
-        elapsedTime = 0; // Comenzar en 0:00
+        elapsedTime = 0; // Reiniciar el tiempo a 0
         roundCounter.setText("Rounds: " + currentRound);
         timer.setText(formatTime(elapsedTime)); // Mostrar el tiempo inicial
-        playButton.setText("Restart"); // Cambiar el texto del botón
+        playButton.setText("Restart");
         enableGridButtons(true);
         showRandomLights();
         soundPool.play(soundStart, 1, 1, 0, 0, 1);
         startTimer(); // Iniciar el cronómetro
     }
 
-
     private void startTimer() {
         timerRunnable = new Runnable() {
             @Override
             public void run() {
-                elapsedTime++; // Aumentar el tiempo
+                elapsedTime += 100; // Aumentar el tiempo en 100 milisegundos (0.1 segundos)
                 timer.setText(formatTime(elapsedTime)); // Actualizar el texto del cronómetro
-                handler.postDelayed(this, 1000); // Ejecutar cada segundo
+                handler.postDelayed(this, 100); // Ejecutar cada 100 milisegundos
             }
         };
-        handler.postDelayed(timerRunnable, 1000); // Iniciar el cronómetro después de 1 segundo
+        handler.postDelayed(timerRunnable, 100);
     }
 
     private void stopTimer() {
         handler.removeCallbacks(timerRunnable); // Detener el cronómetro
     }
 
-    private String formatTime(int timeInSeconds) {
-        int minutes = timeInSeconds / 60;
-        int seconds = timeInSeconds % 60;
+    private String formatTime(long timeInMillis) {
+        int minutes = (int) (timeInMillis / 60000);
+        int seconds = (int) ((timeInMillis % 60000) / 1000);
         return String.format("%02d:%02d", minutes, seconds);
     }
 
@@ -186,34 +190,26 @@ public class LightsOutside extends AppCompatActivity {
     private void onButtonClick(int position, Button button) {
         if (gameOver) return;
 
-        // Verificar si el botón está en la lista de posiciones iluminadas
         if (lightedPositions.contains(position)) {
-            // Si el botón ya fue presionado (color azul), ignorar el clic
             if (button.getCurrentTextColor() == getResources().getColor(R.color.blue2)) {
-                return; // No hacer nada
+                return;
             }
 
-            // Marcar el botón como presionado correctamente
             button.setBackgroundColor(getResources().getColor(R.color.blue2));
-            lightedPositions.remove((Integer) position); // Remover la posición iluminada
+            lightedPositions.remove((Integer) position);
 
-            // Comprobar si todos los botones iluminados han sido pulsados
             if (lightedPositions.isEmpty()) {
                 currentRound++;
                 roundCounter.setText("Rounds: " + currentRound);
-
-                // Reproducir sonido al pasar de ronda
                 soundPool.play(soundNextRound, 1, 1, 0, 0, 1);
 
                 handler.postDelayed(this::showRandomLights, 500);
             }
         } else {
-            // Si el botón no estaba iluminado, el jugador pierde
             Toast.makeText(this, "¡You lost! Rounds played: " + currentRound, Toast.LENGTH_SHORT).show();
             soundPool.play(soundLose, 1, 1, 0, 0, 1);
             gameOver = true;
 
-            // Marcar los botones iluminados en rojo
             for (int i = 0; i < gridLayout.getChildCount(); i++) {
                 Button btn = (Button) gridLayout.getChildAt(i);
                 if (lightedPositions.contains(i)) {
@@ -224,8 +220,40 @@ public class LightsOutside extends AppCompatActivity {
             enableGridButtons(false);
             playButton.setText("Play");
             stopTimer(); // Detener el cronómetro al perder
+            saveBestScore(currentRound, elapsedTime); // Guardar el puntaje en Firestore
         }
     }
+
+    private void saveBestScore(int rounds, long elapsedTime) {
+        if (userId == null) return;
+
+        DocumentReference scoreRef = db.collection("users").document(userId).collection("score3").document("lights_outside_score");
+
+        String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+
+        Map<String, Object> scoreData = new HashMap<>();
+        scoreData.put("rounds", rounds);
+        scoreData.put("time", elapsedTime); // Guardar el tiempo en milisegundos
+        scoreData.put("date", date);
+
+        scoreRef.get().addOnSuccessListener(document -> {
+            boolean shouldUpdate = true;
+
+            if (document.exists()) {
+                // Obtener el número de rondas y el tiempo guardado
+                int bestRounds = document.getLong("rounds").intValue();
+                Long savedTime = document.getLong("time");
+
+                // Actualizar si el número de rondas es mayor o si no hay tiempo guardado correctamente
+                shouldUpdate = (rounds > bestRounds) || (savedTime == null || savedTime == 0);
+            }
+
+            if (shouldUpdate) {
+                scoreRef.set(scoreData);
+            }
+        }).addOnFailureListener(e -> Toast.makeText(this, "Error al guardar puntaje", Toast.LENGTH_LONG).show());
+    }
+
 
     private void enableGridButtons(boolean enabled) {
         for (int i = 0; i < gridLayout.getChildCount(); i++) {

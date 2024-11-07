@@ -7,8 +7,6 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -35,24 +33,42 @@ public class ScoreFragment extends Fragment {
     }
 
     private void loadScores() {
-        // Accede a la colección 'scores' del usuario autenticado
+        // Cargar los puntajes de '2048' desde la colección 'scores'
         db.collection("users").document(userId).collection("scores")
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     for (DocumentSnapshot document : queryDocumentSnapshots) {
-                        // Para cada documento en 'scores', llama a displayScore para mostrarlo
-                        displayScore(document);
+                        displayScore(document, "2048");
+                    }
+                })
+                .addOnFailureListener(e -> e.printStackTrace());
+
+        // Cargar los puntajes de 'Simon Says' desde la colección 'scores2'
+        db.collection("users").document(userId).collection("scores2")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    for (DocumentSnapshot document : queryDocumentSnapshots) {
+                        displayScore(document, "Simon Says");
+                    }
+                })
+                .addOnFailureListener(e -> e.printStackTrace());
+
+        // Cargar los puntajes de 'Lights Outside' desde la colección 'score3'
+        db.collection("users").document(userId).collection("score3")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    for (DocumentSnapshot document : queryDocumentSnapshots) {
+                        displayScore(document, "Lights Outside");
                     }
                 })
                 .addOnFailureListener(e -> e.printStackTrace());
     }
 
-    private void displayScore(DocumentSnapshot document) {
+    private void displayScore(DocumentSnapshot document, String gameTitle) {
         // Inflar el layout del cuadro de puntaje
         View scoreItem = getLayoutInflater().inflate(R.layout.score_item, scoreContainer, false);
 
-        // Configurar el título del juego basado en el nombre del documento
-        String gameTitle = document.getId(); // Usar el ID del documento como título
+        // Configurar el título del juego basado en el parámetro gameTitle
         TextView gameTitleView = scoreItem.findViewById(R.id.game_title);
         gameTitleView.setText(gameTitle);
 
@@ -63,17 +79,50 @@ public class ScoreFragment extends Fragment {
 
         // Verifica si el documento contiene datos de puntaje, fecha y tiempo
         if (document.exists()) {
-            scoreView.setText(String.valueOf(document.getLong("score")));
-            dateView.setText(document.getString("date"));
-            timeView.setText(String.valueOf(document.getLong("time")) + " ms");
+            if (gameTitle.equals("2048")) {
+                // Mostrar puntaje para 2048
+                scoreView.setText(String.valueOf(document.getLong("score")));
+            } else if (gameTitle.equals("Simon Says")) {
+                // Mostrar rondas para Simon Says
+                scoreView.setText(String.valueOf(document.getLong("rounds")));
+            } else if (gameTitle.equals("Lights Outside")) {
+                // Mostrar rondas para Lights Outside
+                scoreView.setText(String.valueOf(document.getLong("rounds")));
+            }
+
+            // Formatear la fecha para mostrar solo la fecha sin la hora
+            String fullDate = document.getString("date");
+            if (fullDate != null && fullDate.contains(" ")) {
+                String dateOnly = fullDate.split(" ")[0];
+                dateView.setText(dateOnly);
+            } else {
+                dateView.setText(fullDate != null ? fullDate : "N/A");
+            }
+
+            // Leer el tiempo directamente en milisegundos y convertir a segundos
+            Long timeInMillis = document.getLong("time");
+            if (timeInMillis != null) {
+                long timeInSeconds = timeInMillis / 1000;
+                timeView.setText(timeInSeconds + " s");
+            } else {
+                timeView.setText("N/A");
+            }
         } else {
             scoreView.setText("N/A");
             dateView.setText("N/A");
             timeView.setText("N/A");
         }
 
+        // Configurar el fondo del contenedor según el juego
+        if (gameTitle.equals("2048")) {
+            scoreItem.setBackgroundResource(R.drawable.second_button);
+        } else if (gameTitle.equals("Simon Says")) {
+            scoreItem.setBackgroundResource(R.drawable.rounded_button_background);
+        } else if (gameTitle.equals("Lights Outside")) {
+            scoreItem.setBackgroundResource(R.drawable.third_button);
+        }
+
         // Agrega la vista del cuadro al contenedor principal
         scoreContainer.addView(scoreItem);
     }
 }
-

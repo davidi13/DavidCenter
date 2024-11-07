@@ -50,7 +50,7 @@
             android:textSize="36sp"
             android:gravity="center" />
 
-        <!-- Nuevo botón debajo de SIMON DICE -->
+        <!-- BOTON 2048 -->
         <Button
             android:id="@+id/second_rounded_button"
             android:layout_width="match_parent"

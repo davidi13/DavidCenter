@@ -14,8 +14,17 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Random;
 
 public class SimonSays extends AppCompatActivity {
@@ -31,20 +40,21 @@ public class SimonSays extends AppCompatActivity {
     private Chronometer chronometer;
     private TextView roundCounter;
 
+    // Variables para Firestore
+    private FirebaseFirestore db;
+    private String userId;
+
     @Override
     protected void onPause() {
         super.onPause();
-        // Pausa todos los sonidos cuando la app se pone en segundo plano
         if (soundPool != null) {
-            soundPool.autoPause(); // Detiene todos los sonidos en curso
+            soundPool.autoPause();
         }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        // Si quieres que los sonidos se reanuden al regresar a la app,
-        // puedes llamar a soundPool.autoResume(); si es necesario.
         soundPool.autoResume();
     }
 
@@ -52,6 +62,10 @@ public class SimonSays extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_simon_says);
+
+        // Inicializar Firestore y obtener el ID del usuario
+        db = FirebaseFirestore.getInstance();
+        userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
         // Inicializa los botones
         buttonRed = findViewById(R.id.button_red);
@@ -89,30 +103,30 @@ public class SimonSays extends AppCompatActivity {
 
         // Configura los botones de colores
         buttonRed.setOnClickListener(v -> {
-            illuminateButton(0); // Ilumina el botón rojo
+            illuminateButton(0);
             handleUserInput(0);
-            playSound(0); // Reproducir sonido al presionar el botón rojo
+            playSound(0);
         });
         buttonBlue.setOnClickListener(v -> {
-            illuminateButton(1); // Ilumina el botón azul
+            illuminateButton(1);
             handleUserInput(1);
-            playSound(1); // Reproducir sonido al presionar el botón azul
+            playSound(1);
         });
         buttonGreen.setOnClickListener(v -> {
-            illuminateButton(2); // Ilumina el botón verde
+            illuminateButton(2);
             handleUserInput(2);
-            playSound(2); // Reproducir sonido al presionar el botón verde
+            playSound(2);
         });
         buttonYellow.setOnClickListener(v -> {
-            illuminateButton(3); // Ilumina el botón amarillo
+            illuminateButton(3);
             handleUserInput(3);
-            playSound(3); // Reproducir sonido al presionar el botón amarillo
+            playSound(3);
         });
 
         // Configura el botón de ir hacia atrás
         backButton.setOnClickListener(v -> {
             if (soundPool != null) {
-                soundPool.autoPause(); // Detener sonidos al regresar al home
+                soundPool.autoPause();
             }
             finish();
         });
@@ -143,25 +157,22 @@ public class SimonSays extends AppCompatActivity {
     private boolean isPlayingSequence = false;
 
     private void showSequence() {
-        isPlayingSequence = true; // Indica que la secuencia está sonando
+        isPlayingSequence = true;
         Handler handler = new Handler();
         for (int i = 0; i < sequence.size(); i++) {
             int colorIndex = sequence.get(i);
             handler.postDelayed(() -> {
-                if (gameActive) { // Solo ilumina y reproduce sonidos si el juego está activo
+                if (gameActive) {
                     illuminateButton(colorIndex);
                     playSound(colorIndex);
                 }
-            }, i * 1000); // Retraso de 1 segundo entre cada color
+            }, i * 1000);
         }
-
-        // Reiniciar isPlayingSequence después de que la secuencia se haya mostrado
         handler.postDelayed(() -> isPlayingSequence = false, sequence.size() * 1000);
     }
 
     private void illuminateButton(int colorIndex) {
         final Button button;
-
         switch (colorIndex) {
             case 0:
                 button = buttonRed;
@@ -179,10 +190,9 @@ public class SimonSays extends AppCompatActivity {
                 button = buttonYellow;
                 button.setBackgroundResource(R.drawable.button_yellow_highlight);
                 break;
-            default: return;
+            default:
+                return;
         }
-
-        // Revertir el color del botón después de medio segundo
         button.postDelayed(() -> {
             switch (colorIndex) {
                 case 0: button.setBackgroundResource(R.drawable.button_red_normal); break;
@@ -202,14 +212,14 @@ public class SimonSays extends AppCompatActivity {
                 nextRound();
             }
         } else {
-            // Error en la entrada del usuario
-            gameActive = false; // Detener el juego
-            if (isPlayingSequence) { // Si la secuencia está sonando, puedes cancelarla aquí
-                // Detenemos cualquier sonido en curso
-                soundPool.autoPause(); // Pausa todos los sonidos
-            }
-            soundPool.play(loseSoundId, 1, 1, 0, 0, 1); // Reproducir sonido de derrota
-            chronometer.stop(); // Detiene el cronómetro
+            gameActive = false;
+            soundPool.autoPause();
+            soundPool.play(loseSoundId, 1, 1, 0, 0, 1);
+            chronometer.stop();
+
+            long elapsedTime = SystemClock.elapsedRealtime() - chronometer.getBase();
+            saveBestScore(round, elapsedTime);
+
             Toast.makeText(this, "¡You lost! Rounds played: " + round, Toast.LENGTH_SHORT).show();
         }
     }
@@ -221,5 +231,30 @@ public class SimonSays extends AppCompatActivity {
             case 2: soundPool.play(greenSoundId, 1, 1, 0, 0, 1); break;
             case 3: soundPool.play(yellowSoundId, 1, 1, 0, 0, 1); break;
         }
+    }
+
+    // Método para guardar el mejor puntaje en la subcolección 'scores2'
+    private void saveBestScore(int rounds, long elapsedTime) {
+        if (userId == null) return;
+
+        DocumentReference scoreRef = db.collection("users").document(userId).collection("scores2").document("simon_says_score");
+
+        String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+
+        Map<String, Object> scoreData = new HashMap<>();
+        scoreData.put("rounds", rounds);
+        scoreData.put("time", elapsedTime);
+        scoreData.put("date", date);
+
+        scoreRef.get().addOnSuccessListener(document -> {
+            if (document.exists()) {
+                int bestRounds = document.getLong("rounds").intValue();
+                if (rounds > bestRounds) {
+                    scoreRef.set(scoreData);
+                }
+            } else {
+                scoreRef.set(scoreData);
+            }
+        }).addOnFailureListener(e -> Toast.makeText(this, "Error al guardar puntaje: " + e.getMessage(), Toast.LENGTH_LONG).show());
     }
 }
