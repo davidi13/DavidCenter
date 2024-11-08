@@ -82,6 +82,21 @@
             android:textSize="36sp"
             android:gravity="center" />
 
-    </LinearLayout>
+        <!-- Botón RAINING FRUITS -->
+        <Button
+            android:id="@+id/arkanoid_game_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:background="@drawable/fourth_button"
+            android:padding="16dp"
+            android:drawableStart="@drawable/pina"
+            android:drawablePadding="8dp"
+            android:text="RAINING FRUITS"
+            android:textStyle="bold"
+            android:textColor="@color/white"
+            android:textSize="36sp"
+            android:gravity="center" />
 
+    </LinearLayout>
 </ScrollView>

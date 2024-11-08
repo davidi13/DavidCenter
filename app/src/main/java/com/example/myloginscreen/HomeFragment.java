@@ -9,7 +9,6 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.fragment.app.Fragment;
-import androidx.navigation.Navigation;
 
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
@@ -68,6 +67,13 @@ public class HomeFragment extends Fragment {
         Button lightsOutsideButton = view.findViewById(R.id.third_rounded_button);
         lightsOutsideButton.setOnClickListener(v -> {
             Intent intent = new Intent(getActivity(), LightsOutside.class);
+            startActivity(intent);
+        });
+
+        // Encuentra el botón ArkanoidGame y establece el OnClickListener
+        Button arkanoidButton = view.findViewById(R.id.arkanoid_game_button);
+        arkanoidButton.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), ArkanoidGame.class);
             startActivity(intent);
         });
 
