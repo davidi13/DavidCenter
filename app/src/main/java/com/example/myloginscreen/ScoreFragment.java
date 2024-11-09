@@ -62,6 +62,16 @@ public class ScoreFragment extends Fragment {
                     }
                 })
                 .addOnFailureListener(e -> e.printStackTrace());
+
+        // Cargar los puntajes de 'Arkanoid Game' desde la colección 'score4'
+        db.collection("users").document(userId).collection("score4")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    for (DocumentSnapshot document : queryDocumentSnapshots) {
+                        displayScore(document, "Arkanoid Game");
+                    }
+                })
+                .addOnFailureListener(e -> e.printStackTrace());
     }
 
     private void displayScore(DocumentSnapshot document, String gameTitle) {
@@ -88,6 +98,9 @@ public class ScoreFragment extends Fragment {
             } else if (gameTitle.equals("Lights Outside")) {
                 // Mostrar rondas para Lights Outside
                 scoreView.setText(String.valueOf(document.getLong("rounds")));
+            } else if (gameTitle.equals("Arkanoid Game")) {
+                // Mostrar puntaje para Arkanoid Game
+                scoreView.setText(String.valueOf(document.getLong("score")));
             }
 
             // Formatear la fecha para mostrar solo la fecha sin la hora
@@ -120,6 +133,8 @@ public class ScoreFragment extends Fragment {
             scoreItem.setBackgroundResource(R.drawable.rounded_button_background);
         } else if (gameTitle.equals("Lights Outside")) {
             scoreItem.setBackgroundResource(R.drawable.third_button);
+        } else if (gameTitle.equals("Arkanoid Game")) {
+            scoreItem.setBackgroundResource(R.drawable.fourth_button);
         }
 
         // Agrega la vista del cuadro al contenedor principal

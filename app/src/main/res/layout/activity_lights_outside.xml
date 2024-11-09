@@ -18,77 +18,64 @@
         android:contentDescription="Botón para volver atrás"
         android:src="@drawable/baseline_arrow_back_ios_24" />
 
-    <!-- ScrollView envuelve el LinearLayout principal -->
-    <ScrollView
-        android:id="@+id/scroll_view"
+    <LinearLayout
+        android:id="@+id/main"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@id/back_button">
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_below="@id/back_button"
+        android:layout_marginTop="60dp">
 
-        <LinearLayout
-            android:id="@+id/main"
-            android:layout_width="match_parent"
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:layout_marginTop="60dp">
+            android:text="LIGHTS OUTSIDE"
+            android:textSize="32sp"
+            android:textColor="@color/purple_200"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp"/>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="LIGHTS OUTSIDE"
-                android:textSize="32sp"
-                android:textColor="@color/purple_200"
-                android:textStyle="bold"
-                android:layout_marginBottom="16dp"/>
+        <GridLayout
+            android:id="@+id/grid_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:rowCount="5"
+            android:columnCount="5"
+            android:background="@android:color/transparent"
+            android:visibility="visible" />
 
-            <GridLayout
-                android:id="@+id/grid_layout"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:rowCount="5"
-                android:columnCount="5"
-                android:background="@android:color/transparent"
-                android:visibility="visible">
+        <TextView
+            android:id="@+id/round_counter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Rounds: 0"
+            android:textSize="20sp"
+            android:textColor="@color/purple_200"
+            android:layout_marginTop="16dp"
+            android:textStyle="bold"
+            android:layout_gravity="center"/>
 
-                <!-- Aquí se agregarán las casillas programáticamente -->
-            </GridLayout>
+        <Chronometer
+            android:id="@+id/chronometer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:textColor="@color/purple_200"
+            android:textStyle="bold"
+            android:layout_gravity="center"
+            android:layout_marginTop="16dp"/>
 
-            <TextView
-                android:id="@+id/round_counter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Rounds: 0"
-                android:textSize="20sp"
-                android:textColor="@color/purple_200"
-                android:layout_marginTop="16dp"
-                android:textStyle="bold"
-                android:layout_gravity="center"/>
-
-            <Chronometer
-                android:id="@+id/chronometer"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="20sp"
-                android:textColor="@color/purple_200"
-                android:textStyle="bold"
-                android:layout_gravity="center"
-                android:layout_marginTop="16dp"/>
-
-            <Button
-                android:id="@+id/play_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Play"
-                android:padding="10dp"
-                android:textSize="18sp"
-                android:background="@drawable/rounded_button_background"
-                android:backgroundTint="@color/purple_200"
-                android:layout_marginTop="20dp"
-                android:textColor="@color/white"/>
-
-        </LinearLayout>
-
-    </ScrollView>
-
+        <Button
+            android:id="@+id/play_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Play"
+            android:padding="10dp"
+            android:textSize="18sp"
+            android:background="@drawable/rounded_button_background"
+            android:backgroundTint="@color/purple_200"
+            android:layout_marginTop="20dp"
+            android:textColor="@color/white"/>
+    </LinearLayout>
 </RelativeLayout>

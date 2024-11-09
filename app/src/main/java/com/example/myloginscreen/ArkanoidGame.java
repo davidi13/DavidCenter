@@ -9,52 +9,165 @@ import android.graphics.Paint;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
 import android.widget.Chronometer;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.Toast;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public class ArkanoidGame extends AppCompatActivity {
     private ArkanoidSurfaceView arkanoidSurfaceView;
     private Chronometer chronometer;
     private TextView scoreText;
     private int score = 0;
+    private int lives = 3;
+    private final int maxLives = 3;
+
+    private ImageView heart1, heart2, heart3;
+    private boolean gameOver = false;
+
+    // Firestore variables
+    private FirebaseFirestore db;
+    private String userId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_arkanoid);
 
-        // Configurar el botón de retroceso
+        // Initialize Firestore and get user ID
+        db = FirebaseFirestore.getInstance();
+        userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
         ImageButton backButton = findViewById(R.id.button_back);
         backButton.setOnClickListener(v -> finish());
 
-        // Configurar el cronómetro y el puntaje
         chronometer = findViewById(R.id.chronometer);
         scoreText = findViewById(R.id.score_text);
 
-        // Configurar el área de juego en el FrameLayout
         FrameLayout gameArea = findViewById(R.id.game_area);
         arkanoidSurfaceView = new ArkanoidSurfaceView(this);
         gameArea.addView(arkanoidSurfaceView);
+
+        heart1 = findViewById(R.id.heart1);
+        heart2 = findViewById(R.id.heart2);
+        heart3 = findViewById(R.id.heart3);
+
+        updateLivesDisplay();
+    }
+
+    private void updateLivesDisplay() {
+        heart1.setVisibility(lives >= 1 ? View.VISIBLE : View.INVISIBLE);
+        heart2.setVisibility(lives >= 2 ? View.VISIBLE : View.INVISIBLE);
+        heart3.setVisibility(lives >= 3 ? View.VISIBLE : View.INVISIBLE);
+    }
+
+    private void gainLife() {
+        if (lives < maxLives) {
+            lives++;
+            runOnUiThread(this::updateLivesDisplay);
+        }
+    }
+
+    private void loseLife() {
+        if (lives > 0) {
+            lives--;
+            runOnUiThread(this::updateLivesDisplay);
+            if (lives == 0) {
+                gameOver();
+            } else {
+                arkanoidSurfaceView.resetBallWithInitialVelocity();
+            }
+        }
+    }
+
+    private void gameOver() {
+        gameOver = true;
+        runOnUiThread(() -> {
+            chronometer.stop();
+
+            // Obtener el tiempo transcurrido
+            long elapsedTime = SystemClock.elapsedRealtime() - chronometer.getBase();
+
+            // Guardar el mejor puntaje en Firestore
+            saveBestScore(userId, score, elapsedTime);
+
+        });
+    }
+
+
+
+
+    private void resetGame() {
+        score = 0;  // Reinicia el puntaje solo al inicio del nuevo juego
+        lives = maxLives;
+        gameOver = false;
+        updateLivesDisplay();
+        scoreText.setText("Score: 0");  // Actualiza el puntaje en pantalla
+        chronometer.setBase(SystemClock.elapsedRealtime());
+        arkanoidSurfaceView.resetBallAndBlocks();
+    }
+
+
+    private void saveBestScore(String userId, int score, long elapsedTime) {
+        if (userId == null) return;
+
+        // Cambia a la colección "score4" en lugar de "scores"
+        DocumentReference scoreRef = db.collection("users").document(userId)
+                .collection("score4").document("arkanoid_score");
+
+        String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+
+        Map<String, Object> scoreData = new HashMap<>();
+        scoreData.put("user", userId);
+        scoreData.put("score", score);
+        scoreData.put("time", elapsedTime);
+        scoreData.put("date", date);
+
+        scoreRef.get().addOnSuccessListener(document -> {
+            if (document.exists()) {
+                int bestScore = document.getLong("score").intValue();
+                if (score > bestScore) {
+                    scoreRef.set(scoreData);
+                }
+            } else {
+                scoreRef.set(scoreData);
+            }
+        }).addOnFailureListener(e ->
+                Toast.makeText(this, "Error saving score: " + e.getMessage(), Toast.LENGTH_LONG).show());
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         arkanoidSurfaceView.pause();
+        chronometer.stop();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         arkanoidSurfaceView.resume();
+        if (!gameOver) {
+            chronometer.start();
+        }
     }
 
     class ArkanoidSurfaceView extends SurfaceView implements Runnable {
@@ -63,29 +176,28 @@ public class ArkanoidGame extends AppCompatActivity {
         private Paint paint;
         private SurfaceHolder surfaceHolder;
 
-        // Configuración de la plataforma
         private float paddleX, paddleY;
-        private float paddleWidth = 150, paddleHeight = 20; // Tamaño reducido de la plataforma
+        private float paddleWidth = 120, paddleHeight = 20;
         private float screenWidth, screenHeight;
 
-        // Configuración de la pelota
         private float ballX, ballY;
-        private float ballRadius = 15; // Tamaño reducido de la pelota
-        private float ballVelocityX = 5, ballVelocityY = 5;
-        private float speedIncrement = 0.2f; // Incremento de velocidad más significativo
-        private float maxVelocity = 20f; // Velocidad máxima de la pelota
+        private float ballRadius = 15;
+        private float initialVelocityX = 5, initialVelocityY = 5;
+        private float ballVelocityX = initialVelocityX, ballVelocityY = initialVelocityY;
+        private float speedIncrement = 0.5f;
+        private float maxVelocity = 25f;
         private boolean ballMoving = false;
 
-        // Configuración de bloques
         private List<Block> blocks;
         private int[] blockColors;
+
+        private int levelsCompleted = 0;
 
         public ArkanoidSurfaceView(Context context) {
             super(context);
             surfaceHolder = getHolder();
             paint = new Paint();
 
-            // Colores para los bloques
             blockColors = new int[]{
                     ContextCompat.getColor(context, R.color.grey_black),
                     ContextCompat.getColor(context, R.color.red),
@@ -98,18 +210,16 @@ public class ArkanoidGame extends AppCompatActivity {
         private void initializeBlocks() {
             blocks = new ArrayList<>();
             int rows = 5;
-            int padding = 2; // Espaciado de 2dp entre bloques
-            int topPadding = 50; // Espacio adicional desde la parte superior
+            int padding = 2;
+            int topPadding = 50;
 
-            // Calcular el ancho de los bloques basado en el ancho total de la pantalla y el padding
-            int columns = 6; // Número de columnas de bloques
+            int columns = 6;
             float blockWidth = (screenWidth - (columns + 1) * padding) / columns;
             float blockHeight = 40;
 
-            // Crear los bloques en filas y columnas
             for (int row = 0; row < rows; row++) {
                 int color = blockColors[row % blockColors.length];
-                int points = Math.max(10, 80 - (row * 20)); // Puntos por fila, asegurando mínimo de 10 puntos
+                int points = Math.max(10, 80 - (row * 20));
                 for (int col = 0; col < columns; col++) {
                     float left = col * (blockWidth + padding) + padding;
                     float top = row * (blockHeight + padding) + padding + topPadding;
@@ -131,16 +241,35 @@ public class ArkanoidGame extends AppCompatActivity {
             screenWidth = getWidth();
             screenHeight = getHeight();
 
-            // Posicionar la plataforma cerca del borde inferior
             paddleY = screenHeight - paddleHeight - 50;
             paddleX = (screenWidth - paddleWidth) / 2;
 
-            // Posicionar la pelota en el centro del FrameLayout
-            ballX = screenWidth / 2;
-            ballY = screenHeight / 2;
-
-            // Inicializar los bloques después de obtener las dimensiones de la pantalla
+            resetBall();
             initializeBlocks();
+        }
+
+        public void resetBallWithInitialVelocity() {
+            resetBall();
+            ballVelocityX = initialVelocityX;
+            ballVelocityY = initialVelocityY;
+        }
+
+        public void resetBallAndBlocks() {
+            resetBallWithInitialVelocity();
+            initializeBlocks();
+            score = 0;
+            runOnUiThread(() -> scoreText.setText("Score: 0"));
+        }
+
+        public void resetGameState() {
+            ballMoving = false;
+            resetBallAndBlocks();
+        }
+
+        private void resetBall() {
+            ballX = screenWidth / 2;
+            ballY = screenHeight - (screenHeight / 4);
+            ballMoving = false;
         }
 
         private void update() {
@@ -148,33 +277,32 @@ public class ArkanoidGame extends AppCompatActivity {
                 ballX += ballVelocityX;
                 ballY += ballVelocityY;
 
-                // Rebote en los bordes laterales
                 if (ballX < ballRadius || ballX > screenWidth - ballRadius) {
                     ballVelocityX = -ballVelocityX;
                 }
 
-                // Rebote en el borde superior
                 if (ballY < ballRadius) {
                     ballVelocityY = -ballVelocityY;
                 }
 
-                // Rebote en la plataforma
                 if (ballY + ballRadius >= paddleY && ballX >= paddleX && ballX <= paddleX + paddleWidth) {
-                    ballVelocityY = -ballVelocityY;
+                    ballVelocityY = -Math.abs(ballVelocityY);
                 }
 
-                // Colisiones con los bloques
+                if (ballY + ballRadius > screenHeight) {
+                    loseLife();
+                    resetBallWithInitialVelocity();
+                }
+
                 for (Block block : blocks) {
                     if (block.isVisible && ballX + ballRadius > block.left && ballX - ballRadius < block.right &&
                             ballY + ballRadius > block.top && ballY - ballRadius < block.bottom) {
-                        ballVelocityY = -ballVelocityY;  // Rebote en el bloque
-                        block.isVisible = false;         // Ocultar el bloque
-                        score += block.points;           // Incrementar puntaje
+                        ballVelocityY = -ballVelocityY;
+                        block.isVisible = false;
+                        score += block.points;
 
-                        // Actualizar la puntuación en la interfaz
                         runOnUiThread(() -> scoreText.setText("Score: " + score));
 
-                        // Incrementar la velocidad de la pelota
                         if (Math.abs(ballVelocityX) < maxVelocity) {
                             ballVelocityX += (ballVelocityX > 0 ? speedIncrement : -speedIncrement);
                         }
@@ -186,7 +314,6 @@ public class ArkanoidGame extends AppCompatActivity {
                     }
                 }
 
-                // Verificar si todos los bloques han sido destruidos
                 boolean allBlocksDestroyed = true;
                 for (Block block : blocks) {
                     if (block.isVisible) {
@@ -195,19 +322,16 @@ public class ArkanoidGame extends AppCompatActivity {
                     }
                 }
 
-                // Regenerar los bloques si todos fueron destruidos
                 if (allBlocksDestroyed) {
-                    // Mover la pelota debajo del área de bloques antes de generar nuevos bloques
-                    ballY = screenHeight - (screenHeight / 4);
-                    initializeBlocks();
-                }
+                    levelsCompleted++;
+                    if (levelsCompleted % 3 == 0) {
+                        runOnUiThread(() -> gainLife());
+                    }
 
-                // Reiniciar posición si la pelota cae debajo de la plataforma
-                if (ballY > screenHeight) {
                     ballX = screenWidth / 2;
-                    ballY = screenHeight / 2;
-                    ballMoving = false;
-                    chronometer.stop(); // Detener el cronómetro
+                    ballY = screenHeight - (screenHeight / 4);
+                    ballVelocityY = -Math.abs(ballVelocityY);
+                    initializeBlocks();
                 }
             }
         }
@@ -222,15 +346,12 @@ public class ArkanoidGame extends AppCompatActivity {
 
                 canvas.drawColor(Color.BLACK);
 
-                // Dibujar la plataforma
                 paint.setColor(Color.BLUE);
                 canvas.drawRect(paddleX, paddleY, paddleX + paddleWidth, paddleY + paddleHeight, paint);
 
-                // Dibujar la pelota
                 paint.setColor(Color.WHITE);
                 canvas.drawCircle(ballX, ballY, ballRadius, paint);
 
-                // Dibujar los bloques
                 for (Block block : blocks) {
                     if (block.isVisible) {
                         paint.setColor(block.color);
@@ -252,28 +373,33 @@ public class ArkanoidGame extends AppCompatActivity {
 
         @Override
         public boolean onTouchEvent(MotionEvent event) {
-            switch (event.getAction()) {
-                case MotionEvent.ACTION_DOWN:
-                    if (!ballMoving) {
-                        ballMoving = true;
-                        chronometer.setBase(SystemClock.elapsedRealtime()); // Reiniciar el cronómetro
-                        chronometer.start(); // Iniciar el cronómetro
-                    }
-                    break;
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                if (gameOver) {
+                    // Reinicia el juego cuando el usuario toca la pantalla después de perder
+                    resetGame();
+                } else if (!ballMoving && lives > 0) {
+                    ballMoving = true;
 
-                case MotionEvent.ACTION_MOVE:
-                    float touchX = event.getX();
-                    paddleX = touchX - paddleWidth / 2;
-
-                    if (paddleX < 0) {
-                        paddleX = 0;
-                    } else if (paddleX + paddleWidth > screenWidth) {
-                        paddleX = screenWidth - paddleWidth;
+                    // Iniciar el cronómetro solo en el primer toque
+                    if (chronometer.getBase() == SystemClock.elapsedRealtime()) {
+                        chronometer.setBase(SystemClock.elapsedRealtime());
+                        chronometer.start();
                     }
-                    break;
+                }
+            } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
+                float touchX = event.getX();
+                paddleX = touchX - paddleWidth / 2;
+
+                if (paddleX < 0) {
+                    paddleX = 0;
+                } else if (paddleX + paddleWidth > screenWidth) {
+                    paddleX = screenWidth - paddleWidth;
+                }
             }
             return true;
         }
+
+
 
         public void resume() {
             isPlaying = true;

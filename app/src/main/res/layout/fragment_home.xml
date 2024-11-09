@@ -92,7 +92,7 @@
             android:padding="16dp"
             android:drawableStart="@drawable/pina"
             android:drawablePadding="8dp"
-            android:text="RAINING FRUITS"
+            android:text="ARKANOID GAME"
             android:textStyle="bold"
             android:textColor="@color/white"
             android:textSize="36sp"

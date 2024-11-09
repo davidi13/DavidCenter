@@ -1,121 +1,112 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:layout_height="wrap_content">
 
-    <RelativeLayout
+    <!-- Botón de retroceso en la esquina superior izquierda -->
+    <ImageButton
+        android:id="@+id/button_back"
+        android:layout_width="48dp"
+        android:layout_height="32dp"
+        android:layout_marginTop="40dp"
+        android:layout_marginLeft="20dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:background="@drawable/rounded_button_background"
+        android:contentDescription="Botón para volver atrás"
+        android:src="@drawable/baseline_arrow_back_ios_24" />
+
+    <LinearLayout
+        android:id="@+id/main"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_below="@id/button_back"
+        android:layout_marginTop="60dp">
 
-        <!-- Botón de retroceso en la esquina superior izquierda -->
-        <ImageButton
-            android:id="@+id/button_back"
-            android:layout_width="48dp"
-            android:layout_height="32dp"
-            android:layout_marginTop="40dp"
-            android:layout_marginLeft="20dp"
-            android:layout_alignParentStart="true"
-            android:layout_alignParentTop="true"
-            android:background="@drawable/rounded_button_background"
-            android:contentDescription="Botón para volver atrás"
-            android:src="@drawable/baseline_arrow_back_ios_24" />
-
-        <LinearLayout
-            android:id="@+id/main"
-            android:layout_width="match_parent"
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:layout_below="@id/button_back"
-            android:layout_marginTop="60dp">
+            android:text="SIMON SAYS"
+            android:textSize="32sp"
+            android:textColor="@color/lavender"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp"/>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="SIMON SAYS"
-                android:textSize="32sp"
-                android:textColor="@color/lavender"
-                android:textStyle="bold"
-                android:layout_marginBottom="16dp"/>
-
-            <GridLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:columnCount="2"
-                android:rowCount="2"
-                android:layout_gravity="center">
-
-                <Button
-                    android:id="@+id/button_red"
-                    android:layout_width="150dp"
-                    android:layout_height="150dp"
-                    android:background="@drawable/button_red_normal"
-                    android:textColor="@android:color/white"
-                    android:contentDescription="Botón rojo"/>
-
-                <Button
-                    android:id="@+id/button_blue"
-                    android:layout_width="150dp"
-                    android:layout_height="150dp"
-                    android:background="@drawable/button_blue_normal"
-                    android:textColor="@android:color/white"
-                    android:contentDescription="Botón azul"/>
-
-                <Button
-                    android:id="@+id/button_green"
-                    android:layout_width="150dp"
-                    android:layout_height="150dp"
-                    android:background="@drawable/button_green_normal"
-                    android:textColor="@android:color/white"
-                    android:contentDescription="Botón verde"/>
-
-                <Button
-                    android:id="@+id/button_yellow"
-                    android:layout_width="150dp"
-                    android:layout_height="150dp"
-                    android:background="@drawable/button_yellow_normal"
-                    android:textColor="@android:color/white"
-                    android:contentDescription="Botón amarillo"/>
-
-            </GridLayout>
-
-            <TextView
-                android:id="@+id/round_counter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Rounds: 0"
-                android:textSize="20sp"
-                android:textColor="@color/lavender"
-                android:layout_marginTop="16dp"
-                android:textStyle="bold"
-                android:layout_gravity="center"/>
-
-            <Chronometer
-                android:id="@+id/chronometer"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="20sp"
-                android:textColor="@color/lavender"
-                android:textStyle="bold"
-                android:layout_gravity="center"
-                android:layout_marginTop="16dp"/>
+        <GridLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:columnCount="2"
+            android:rowCount="2"
+            android:layout_gravity="center">
 
             <Button
-                android:id="@+id/button_start"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="36dp"
-                android:text="PLAY"
-                android:background="@drawable/rounded_button_background"
+                android:id="@+id/button_red"
+                android:layout_width="150dp"
+                android:layout_height="150dp"
+                android:background="@drawable/button_red_normal"
                 android:textColor="@android:color/white"
-                android:textSize="18sp"
-                android:padding="10dp"
-                android:layout_gravity="center"
-                android:contentDescription="Botón para iniciar el juego"/>
-        </LinearLayout>
+                android:contentDescription="Botón rojo"/>
 
-    </RelativeLayout>
+            <Button
+                android:id="@+id/button_blue"
+                android:layout_width="150dp"
+                android:layout_height="150dp"
+                android:background="@drawable/button_blue_normal"
+                android:textColor="@android:color/white"
+                android:contentDescription="Botón azul"/>
 
-</ScrollView>
+            <Button
+                android:id="@+id/button_green"
+                android:layout_width="150dp"
+                android:layout_height="150dp"
+                android:background="@drawable/button_green_normal"
+                android:textColor="@android:color/white"
+                android:contentDescription="Botón verde"/>
+
+            <Button
+                android:id="@+id/button_yellow"
+                android:layout_width="150dp"
+                android:layout_height="150dp"
+                android:background="@drawable/button_yellow_normal"
+                android:textColor="@android:color/white"
+                android:contentDescription="Botón amarillo"/>
+        </GridLayout>
+
+        <TextView
+            android:id="@+id/round_counter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Rounds: 0"
+            android:textSize="20sp"
+            android:textColor="@color/lavender"
+            android:layout_marginTop="16dp"
+            android:textStyle="bold"
+            android:layout_gravity="center"/>
+
+        <Chronometer
+            android:id="@+id/chronometer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:textColor="@color/lavender"
+            android:textStyle="bold"
+            android:layout_gravity="center"
+            android:layout_marginTop="16dp"/>
+
+        <Button
+            android:id="@+id/button_start"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="36dp"
+            android:text="PLAY"
+            android:background="@drawable/rounded_button_background"
+            android:textColor="@android:color/white"
+            android:textSize="18sp"
+            android:padding="10dp"
+            android:layout_gravity="center"
+            android:contentDescription="Botón para iniciar el juego"/>
+    </LinearLayout>
+</RelativeLayout>
