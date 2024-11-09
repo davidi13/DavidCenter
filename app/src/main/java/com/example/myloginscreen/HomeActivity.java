@@ -5,19 +5,27 @@ import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+
+import com.bumptech.glide.Glide;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 public class HomeActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     private DrawerLayout drawerLayout;
+    private ImageView logoImageView;  // ImageView para la imagen de perfil en el header
+    private StorageReference storageReference;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,14 +38,20 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        // Obtener datos pasados por Intent (email y provider)
-        Bundle bundle = getIntent().getExtras();
-        String email = bundle != null ? bundle.getString("email") : "";
+        // Inicializar el StorageReference para la imagen de perfil
+        storageReference = FirebaseStorage.getInstance().getReference("profile_images/" + FirebaseAuth.getInstance().getCurrentUser().getUid() + ".jpg");
 
-        // Actualizar el TextView en el encabezado del NavigationView con el correo electrónico
+        // Configurar el header del NavigationView
         View headerView = navigationView.getHeaderView(0);
+
+        // Inicializar el logo en el header y cargar la imagen desde Firebase Storage
+        logoImageView = headerView.findViewById(R.id.logo_cambiar);
+        loadProfileImage();
+
+        // Configurar el email en el header del NavigationView
         TextView emailHeaderText = headerView.findViewById(R.id.email_header_text);
-        emailHeaderText.setText(email); // Establecer el correo electrónico en el encabezado
+        String email = FirebaseAuth.getInstance().getCurrentUser() != null ? FirebaseAuth.getInstance().getCurrentUser().getEmail() : "contact@gmail.com";
+        emailHeaderText.setText(email);
 
         // Mostrar fragmento inicial (HomeFragment) si no hay estado guardado
         if (savedInstanceState == null) {
@@ -53,6 +67,18 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
             } else {
                 drawerLayout.openDrawer(GravityCompat.START);
             }
+        });
+    }
+
+    // Método para cargar la imagen de perfil desde Firebase Storage en el header del menú
+    private void loadProfileImage() {
+        storageReference.getDownloadUrl().addOnSuccessListener(uri -> {
+            Glide.with(this)
+                    .load(uri)
+                    .circleCrop() // Asegura que la imagen cargada sea circular
+                    .into(logoImageView); // Aplica la imagen al ImageView del header
+        }).addOnFailureListener(e -> {
+            Toast.makeText(HomeActivity.this, "Failed to load profile image", Toast.LENGTH_SHORT).show();
         });
     }
 

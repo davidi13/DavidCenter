@@ -42,6 +42,7 @@ public class ArkanoidGame extends AppCompatActivity {
 
     private ImageView heart1, heart2, heart3;
     private boolean gameOver = false;
+    private boolean isFirstTouch = true; // Variable para verificar si es el primer toque
 
     // Firestore variables
     private FirebaseFirestore db;
@@ -109,11 +110,10 @@ public class ArkanoidGame extends AppCompatActivity {
             // Guardar el mejor puntaje en Firestore
             saveBestScore(userId, score, elapsedTime);
 
+            Toast.makeText(ArkanoidGame.this, "Game over!", Toast.LENGTH_LONG).show();
+
         });
     }
-
-
-
 
     private void resetGame() {
         score = 0;  // Reinicia el puntaje solo al inicio del nuevo juego
@@ -122,9 +122,9 @@ public class ArkanoidGame extends AppCompatActivity {
         updateLivesDisplay();
         scoreText.setText("Score: 0");  // Actualiza el puntaje en pantalla
         chronometer.setBase(SystemClock.elapsedRealtime());
+        isFirstTouch = true; // Reiniciar la variable para permitir que el cronómetro inicie en el primer toque
         arkanoidSurfaceView.resetBallAndBlocks();
     }
-
 
     private void saveBestScore(String userId, int score, long elapsedTime) {
         if (userId == null) return;
@@ -165,9 +165,6 @@ public class ArkanoidGame extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         arkanoidSurfaceView.resume();
-        if (!gameOver) {
-            chronometer.start();
-        }
     }
 
     class ArkanoidSurfaceView extends SurfaceView implements Runnable {
@@ -375,15 +372,15 @@ public class ArkanoidGame extends AppCompatActivity {
         public boolean onTouchEvent(MotionEvent event) {
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
                 if (gameOver) {
-                    // Reinicia el juego cuando el usuario toca la pantalla después de perder
                     resetGame();
                 } else if (!ballMoving && lives > 0) {
                     ballMoving = true;
 
                     // Iniciar el cronómetro solo en el primer toque
-                    if (chronometer.getBase() == SystemClock.elapsedRealtime()) {
+                    if (isFirstTouch) {
                         chronometer.setBase(SystemClock.elapsedRealtime());
                         chronometer.start();
+                        isFirstTouch = false;
                     }
                 }
             } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
@@ -398,8 +395,6 @@ public class ArkanoidGame extends AppCompatActivity {
             }
             return true;
         }
-
-
 
         public void resume() {
             isPlaying = true;
