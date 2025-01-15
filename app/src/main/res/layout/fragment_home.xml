@@ -90,7 +90,7 @@
             android:layout_margin="16dp"
             android:background="@drawable/fourth_button"
             android:padding="16dp"
-            android:drawableStart="@drawable/pina"
+            android:drawableStart="@drawable/arkanoid"
             android:drawablePadding="8dp"
             android:text="ARKANOID GAME"
             android:textStyle="bold"
