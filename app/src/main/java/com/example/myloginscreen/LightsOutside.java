@@ -223,35 +223,25 @@ public class LightsOutside extends AppCompatActivity {
         }
     }
 
+    // Método para guardar todas las partidas en la subcolección 'score3'
     private void saveBestScore(int rounds, long elapsedTime) {
         if (userId == null) return;
 
-        DocumentReference scoreRef = db.collection("users").document(userId).collection("score3").document("lights_outside_score");
+        // Crear un nuevo documento para cada partida con un ID único
+        DocumentReference scoreRef = db.collection("users").document(userId)
+                .collection("score3").document();
 
         String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
 
         Map<String, Object> scoreData = new HashMap<>();
         scoreData.put("rounds", rounds);
-        scoreData.put("time", elapsedTime); // Guardar el tiempo en milisegundos
+        scoreData.put("time", elapsedTime);
         scoreData.put("date", date);
 
-        scoreRef.get().addOnSuccessListener(document -> {
-            boolean shouldUpdate = true;
-
-            if (document.exists()) {
-                // Obtener el número de rondas y el tiempo guardado
-                int bestRounds = document.getLong("rounds").intValue();
-                Long savedTime = document.getLong("time");
-
-                // Actualizar si el número de rondas es mayor o si no hay tiempo guardado correctamente
-                shouldUpdate = (rounds > bestRounds) || (savedTime == null || savedTime == 0);
-            }
-
-            if (shouldUpdate) {
-                scoreRef.set(scoreData);
-            }
-        }).addOnFailureListener(e -> Toast.makeText(this, "Error al guardar puntaje", Toast.LENGTH_LONG).show());
+        scoreRef.set(scoreData)
+                .addOnFailureListener(e -> Toast.makeText(this, "Error al guardar puntaje: " + e.getMessage(), Toast.LENGTH_LONG).show());
     }
+
 
 
     private void enableGridButtons(boolean enabled) {

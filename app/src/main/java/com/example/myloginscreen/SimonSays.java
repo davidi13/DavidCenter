@@ -232,11 +232,13 @@ public class SimonSays extends AppCompatActivity {
         }
     }
 
-    // Método para guardar el mejor puntaje en la subcolección 'scores2'
+    // Método para guardar todas las partidas en la subcolección 'scores2'
     private void saveBestScore(int rounds, long elapsedTime) {
         if (userId == null) return;
 
-        DocumentReference scoreRef = db.collection("users").document(userId).collection("scores2").document("simon_says_score");
+        // Crear un nuevo documento para cada partida con un ID único
+        DocumentReference scoreRef = db.collection("users").document(userId)
+                .collection("scores2").document();
 
         String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
 
@@ -245,15 +247,8 @@ public class SimonSays extends AppCompatActivity {
         scoreData.put("time", elapsedTime);
         scoreData.put("date", date);
 
-        scoreRef.get().addOnSuccessListener(document -> {
-            if (document.exists()) {
-                int bestRounds = document.getLong("rounds").intValue();
-                if (rounds > bestRounds) {
-                    scoreRef.set(scoreData);
-                }
-            } else {
-                scoreRef.set(scoreData);
-            }
-        }).addOnFailureListener(e -> Toast.makeText(this, "Error al guardar puntaje: " + e.getMessage(), Toast.LENGTH_LONG).show());
+        scoreRef.set(scoreData)
+                .addOnFailureListener(e -> Toast.makeText(this, "Error al guardar puntaje: " + e.getMessage(), Toast.LENGTH_LONG).show());
     }
+
 }

@@ -69,33 +69,25 @@ public class Game2048Activity extends AppCompatActivity {
         initSwipeListener();
     }
 
-    // Método para guardar el mejor puntaje
+    // Método para guardar todas las partidas en la subcolección 'scores'
     private void saveBestScore(int score, long elapsedTime) {
-        if (userId == null) return; // Verificar que el usuario esté autenticado
+        if (userId == null) return;
 
-        DocumentReference scoreRef = db.collection("users").document(userId).collection("scores").document("best_score");
+        // Crear un nuevo documento para cada partida con un ID único
+        DocumentReference scoreRef = db.collection("users").document(userId)
+                .collection("scores").document();
 
-        // Formatear la fecha y hora
-        String date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
+        String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
 
-        // Datos a guardar
         Map<String, Object> scoreData = new HashMap<>();
         scoreData.put("score", score);
-        scoreData.put("time", elapsedTime); // tiempo en milisegundos
+        scoreData.put("time", elapsedTime);
         scoreData.put("date", date);
 
-        // Obtener el mejor puntaje actual y actualizar si el nuevo puntaje es mayor
-        scoreRef.get().addOnSuccessListener(document -> {
-            if (document.exists()) {
-                int bestScore = document.getLong("score").intValue();
-                if (score > bestScore) {
-                    scoreRef.set(scoreData); // Actualizar con el nuevo mejor puntaje
-                }
-            } else {
-                scoreRef.set(scoreData); // Guardar si no existe puntaje previo
-            }
-        }).addOnFailureListener(e -> Toast.makeText(this, "Error al guardar puntaje", Toast.LENGTH_SHORT).show());
+        scoreRef.set(scoreData)
+                .addOnFailureListener(e -> Toast.makeText(this, "Error al guardar puntaje: " + e.getMessage(), Toast.LENGTH_LONG).show());
     }
+
 
 
     private void initializeViews() {

@@ -129,29 +129,19 @@ public class ArkanoidGame extends AppCompatActivity {
     private void saveBestScore(String userId, int score, long elapsedTime) {
         if (userId == null) return;
 
-        // Cambia a la colección "score4" en lugar de "scores"
+        // Crear un nuevo documento para cada partida con un ID único
         DocumentReference scoreRef = db.collection("users").document(userId)
-                .collection("score4").document("arkanoid_score");
+                .collection("score4").document();
 
         String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
 
         Map<String, Object> scoreData = new HashMap<>();
-        scoreData.put("user", userId);
         scoreData.put("score", score);
         scoreData.put("time", elapsedTime);
         scoreData.put("date", date);
 
-        scoreRef.get().addOnSuccessListener(document -> {
-            if (document.exists()) {
-                int bestScore = document.getLong("score").intValue();
-                if (score > bestScore) {
-                    scoreRef.set(scoreData);
-                }
-            } else {
-                scoreRef.set(scoreData);
-            }
-        }).addOnFailureListener(e ->
-                Toast.makeText(this, "Error saving score: " + e.getMessage(), Toast.LENGTH_LONG).show());
+        scoreRef.set(scoreData)
+                .addOnFailureListener(e -> Toast.makeText(this, "Error al guardar puntaje: " + e.getMessage(), Toast.LENGTH_LONG).show());
     }
 
     @Override

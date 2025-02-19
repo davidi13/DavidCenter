@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 
 public class ScoreFragment extends Fragment {
 
@@ -33,42 +34,20 @@ public class ScoreFragment extends Fragment {
     }
 
     private void loadScores() {
-        // Cargar los puntajes de '2048' desde la colección 'scores'
-        db.collection("users").document(userId).collection("scores")
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    for (DocumentSnapshot document : queryDocumentSnapshots) {
-                        displayScore(document, "2048");
-                    }
-                })
-                .addOnFailureListener(e -> e.printStackTrace());
+        // Cargar el historial de partidas de cada juego
+        loadGameHistory("scores", "2048");
+        loadGameHistory("scores2", "Simon Says");
+        loadGameHistory("score3", "Lights Outside");
+        loadGameHistory("score4", "Arkanoid Game");
+    }
 
-        // Cargar los puntajes de 'Simon Says' desde la colección 'scores2'
-        db.collection("users").document(userId).collection("scores2")
+    private void loadGameHistory(String collectionName, String gameTitle) {
+        db.collection("users").document(userId).collection(collectionName)
+                .orderBy("date", Query.Direction.DESCENDING) // Ordenar por fecha (más recientes primero)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     for (DocumentSnapshot document : queryDocumentSnapshots) {
-                        displayScore(document, "Simon Says");
-                    }
-                })
-                .addOnFailureListener(e -> e.printStackTrace());
-
-        // Cargar los puntajes de 'Lights Outside' desde la colección 'score3'
-        db.collection("users").document(userId).collection("score3")
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    for (DocumentSnapshot document : queryDocumentSnapshots) {
-                        displayScore(document, "Lights Outside");
-                    }
-                })
-                .addOnFailureListener(e -> e.printStackTrace());
-
-        // Cargar los puntajes de 'Arkanoid Game' desde la colección 'score4'
-        db.collection("users").document(userId).collection("score4")
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    for (DocumentSnapshot document : queryDocumentSnapshots) {
-                        displayScore(document, "Arkanoid Game");
+                        displayScore(document, gameTitle);
                     }
                 })
                 .addOnFailureListener(e -> e.printStackTrace());
@@ -87,38 +66,29 @@ public class ScoreFragment extends Fragment {
         TextView dateView = scoreItem.findViewById(R.id.date_value);
         TextView timeView = scoreItem.findViewById(R.id.time_value);
 
-        // Verifica si el documento contiene datos de puntaje, fecha y tiempo
         if (document.exists()) {
-            if (gameTitle.equals("2048")) {
-                // Mostrar puntaje para 2048
-                scoreView.setText(String.valueOf(document.getLong("score")));
-            } else if (gameTitle.equals("Simon Says")) {
-                // Mostrar rondas para Simon Says
-                scoreView.setText(String.valueOf(document.getLong("rounds")));
-            } else if (gameTitle.equals("Lights Outside")) {
-                // Mostrar rondas para Lights Outside
-                scoreView.setText(String.valueOf(document.getLong("rounds")));
-            } else if (gameTitle.equals("Arkanoid Game")) {
-                // Mostrar puntaje para Arkanoid Game
-                scoreView.setText(String.valueOf(document.getLong("score")));
+            if (gameTitle.equals("2048") || gameTitle.equals("Arkanoid Game")) {
+                scoreView.setText("Puntaje: " + document.getLong("score"));
+            } else {
+                scoreView.setText("Rondas: " + document.getLong("rounds"));
             }
 
             // Formatear la fecha para mostrar solo la fecha sin la hora
             String fullDate = document.getString("date");
             if (fullDate != null && fullDate.contains(" ")) {
                 String dateOnly = fullDate.split(" ")[0];
-                dateView.setText(dateOnly);
+                dateView.setText("Fecha: " + dateOnly);
             } else {
-                dateView.setText(fullDate != null ? fullDate : "N/A");
+                dateView.setText("Fecha: " + (fullDate != null ? fullDate : "N/A"));
             }
 
-            // Leer el tiempo directamente en milisegundos y convertir a segundos
+            // Convertir el tiempo de milisegundos a segundos y mostrarlo
             Long timeInMillis = document.getLong("time");
             if (timeInMillis != null) {
                 long timeInSeconds = timeInMillis / 1000;
-                timeView.setText(timeInSeconds + " s");
+                timeView.setText("Tiempo: " + timeInSeconds + " s");
             } else {
-                timeView.setText("N/A");
+                timeView.setText("Tiempo: N/A");
             }
         } else {
             scoreView.setText("N/A");
@@ -137,7 +107,7 @@ public class ScoreFragment extends Fragment {
             scoreItem.setBackgroundResource(R.drawable.fourth_button);
         }
 
-        // Agrega la vista del cuadro al contenedor principal
+        // Agregar la vista del cuadro al contenedor principal
         scoreContainer.addView(scoreItem);
     }
 }
